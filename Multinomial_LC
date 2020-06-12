@@ -1,0 +1,53 @@
+
+#!/usr/bin/env python
+import pandas as pd
+import numpy as np
+from sklearn import linear_model
+from sklearn import metrics
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegressionCV
+
+feats_train = pd.read_csv('feats_train.csv')
+feats_train['P53']=feats_train['P53'].astype('int')
+
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(feats_train.iloc[:,1:-1],feats_train.iloc[:,-1], train_size=0.8,random_state=5)
+Xtrain.shape
+Xtest.shape
+print(Xtest)
+
+#from sklearn import tree
+#clf = tree.DecisionTreeClassifier(criterion="entropy")
+#clf = clf.fit(Xtrain, Ytrain)
+
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression 
+
+#lr =  LogisticRegression(penalty='l1',C=100,multi_class='ovr') 
+lr = LogisticRegressionCV(fit_intercept=True, multi_class='multinomial', penalty='l2', solver='lbfgs')
+#lr = LogisticRegressionCV(fit_intercept=True, multi_class='multinomial', penalty='l2', solver='newton-cg')
+lr.fit(Xtrain, Ytrain)
+
+ 
+#3.训练svm分类器
+#lr=svm.SVC(C=3,kernel='rbf',gamma=10,decision_function_shape='ovo') # ovr:一对多策略
+#lr.fit(Xtrain,Ytrain.ravel()) #ravel函数在降维时默认是行序优先
+
+# Train multinomial logistic regression model
+#mul_lr = linear_model.LogisticRegression(multi_class='multinomial', solver='lbfgs').fit(Xtrain, Ytrain)
+
+#score = clf.score(Xtest, Ytest) #返回预测的准确度
+#score
+
+yfit= lr.predict(Xtest)
+print(yfit)
+from sklearn.metrics import accuracy_score
+accuracy_score(Ytest, yfit)
+
+
+feats_test = pd.read_csv('feats_test.csv')
+feats_test['P53']=feats_test['P53'].astype('int')
+print(feats_test['P53'])
+#feats_test_b = train_test_split(feats_train.iloc[:,1:-1],feats_train.iloc[:,-1])
+yfit1= lr.predict(feats_test)
+print(yfit1)
