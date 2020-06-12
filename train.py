@@ -81,7 +81,7 @@ class CNNNet(nn.Module):  # 我们定义网络时一般是继承的torch.nn.Modu
         # x = x.view(-1, 16 * 5 * 5)
         x = x.view(-1, 16 * 54 * 54)
         # 179776= 16*53*53*4
-        #186624 =16*54*54*4 #4是批次batch，16是输入？什么。
+        #186624 =16*54*54*4 #4是批次数batch
 
         # x = x.view(-1, self.num_flat_features(x)) #为什么我要用这个？
 
