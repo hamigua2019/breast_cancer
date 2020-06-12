@@ -1,3 +1,6 @@
+
+# 1
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -32,7 +35,7 @@ train_loader = torch.utils.data.DataLoader(train_data, batch_size=4, shuffle=Tru
 test_data = datasets.ImageFolder('./hamican/cancer/images_test', transform=my_trans)
 test_loader = torch.utils.data.DataLoader(test_data, batch_size=4, shuffle=True)
 
-classes = ['0', '1', '2', '3']
+classes = ['Luminal_A', 'Luminal_B', 'HER2_Enriched', 'Triple_Negative']
 
 
 import matplotlib.pyplot as plt
@@ -52,6 +55,7 @@ images, labels = dataiter.next()
 
 imshow(torchvision.utils.make_grid(images))
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+
 # 首先是调用Variable、 torch.nn、torch.nn.functional
 from torch.autograd import Variable  # 这一步还没有显式用到variable，但是现在写在这里也没问题，后面会用到
 import torch.nn as nn
@@ -65,7 +69,7 @@ class CNNNet(nn.Module):  # 我们定义网络时一般是继承的torch.nn.Modu
         self.conv1 = nn.Conv2d(3, 6, 3)
         self.pool = nn.MaxPool2d(2, 2)  # 最大池化层
         self.conv2 = nn.Conv2d(6, 16, 3)  # 同样是卷积层
-        self.conv2_drop = nn.Dropout2d(0.5)
+        self.conv2_drop = nn.Dropout2d(0.5),
         self.fc1 = nn.Linear(16 * 54 * 54, 120)  # 接着三个全连接层
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
@@ -103,7 +107,7 @@ import torch.optim as optim          #导入torch.potim模块
 
 criterion = nn.CrossEntropyLoss()    #同样是用到了神经网络工具箱 nn 中的交叉熵损失函数
 # optimizer = torch.optim.Adam(net.parameters())
-optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.5)   #optim模块中的SGD梯度优化方式---随机梯度下降
+optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)   #optim模块中的SGD梯度优化方式---随机梯度下降
 from torch.utils.data import DataLoader
 
 for epoch in range(4):  # loop over the dataset multiple times 指定训练一共要循环几个epoch
@@ -133,3 +137,52 @@ for epoch in range(4):  # loop over the dataset multiple times 指定训练一�
             running_loss = 0.0  # 这一个200次结束后，就把running_loss归零，下一个200次继续使用
 
 print('Finished Training')
+
+
+#2
+dataiter = iter(test_loader)
+images, labels = dataiter.next()
+
+# print images
+imshow(torchvision.utils.make_grid(images))
+print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+
+outputs = net(images)
+_, predicted = torch.max(outputs, 1)
+print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
+
+
+correct = 0   # 定义预测正确的图片数，初始化为0
+total = 0     # 总共参与测试的图片数，也初始化为0
+with torch.no_grad():
+    for data in test_loader:  # 循环每一个batch
+        images, labels = data
+        images, labels = images.to(device),labels.to(device)    
+        outputs = net(images)   # 输入网络进行测试
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)          # 更新测试图片的数量
+        correct += (predicted == labels).sum().item() # 更新正确分类的图片的数量
+
+print('Accuracy of the network on the 100 test images: %d %%' % (100 * correct / total))          # 最后打印结果
+
+#outputs = net(Variable(images))  
+
+# 3
+class_correct = list(0. for i in range(4))
+class_total = list(0. for i in range(4))
+with torch.no_grad():
+    for data in test_loader:
+        images, labels = data
+        outputs = net(images)
+        _, predicted = torch.max(outputs, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(4):
+            label = labels[i]
+            class_correct[label] += c[i].item()
+            class_total[label] += 1
+            
+#            class_correct[label] += c[i].item()
+
+for i in range(4):
+    print('Accuracy of %5s : %2d %%' % (
+        classes[i], 100 * class_correct[i] / class_total[i]))
